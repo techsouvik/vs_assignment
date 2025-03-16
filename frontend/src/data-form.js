@@ -8,7 +8,7 @@ import axios from 'axios';
 
 const endpointMapping = {
     'Notion': 'notion',
-    'Airtable': 'airtable',
+    'Airtable': 'airtable'
 };
 
 export const DataForm = ({ integrationType, credentials }) => {
@@ -19,11 +19,18 @@ export const DataForm = ({ integrationType, credentials }) => {
         try {
             const formData = new FormData();
             formData.append('credentials', JSON.stringify(credentials));
-            const response = await axios.post(`http://localhost:8000/integrations/${endpoint}/load`, formData);
+            let url = `http://localhost:8000/integrations/${endpoint}/load`;
+            
+            // Special case for HubSpot (using a different endpoint)
+            if (endpoint === 'hubspot') {
+                url = `http://localhost:8000/integrations/${endpoint}/get_hubspot_items`;
+            }
+            
+            const response = await axios.post(url, formData);
             const data = response.data;
-            setLoadedData(data);
+            setLoadedData(JSON.stringify(data, null, 2));
         } catch (e) {
-            alert(e?.response?.data?.detail);
+            alert(e?.response?.data?.detail || "Error loading data");
         }
     }
 
@@ -35,6 +42,8 @@ export const DataForm = ({ integrationType, credentials }) => {
                     value={loadedData || ''}
                     sx={{mt: 2}}
                     InputLabelProps={{ shrink: true }}
+                    multiline
+                    rows={10}
                     disabled
                 />
                 <Button
